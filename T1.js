@@ -895,9 +895,9 @@ ApplicationMain.create = function(config) {
 	ManifestResources.init(config);
 	var _this = app.meta;
 	if(__map_reserved["build"] != null) {
-		_this.setReserved("build","52");
+		_this.setReserved("build","71");
 	} else {
-		_this.h["build"] = "52";
+		_this.h["build"] = "71";
 	}
 	var _this1 = app.meta;
 	if(__map_reserved["company"] != null) {
@@ -7751,20 +7751,30 @@ HUD.prototype = $extend(flixel_group_FlxTypedGroup.prototype,{
 	,__class__: HUD
 });
 var HelpState = function(MaxSize) {
+	this.tx = flixel_FlxG.width / 30 | 0;
 	flixel_FlxState.call(this,MaxSize);
 };
 $hxClasses["HelpState"] = HelpState;
 HelpState.__name__ = ["HelpState"];
 HelpState.__super__ = flixel_FlxState;
 HelpState.prototype = $extend(flixel_FlxState.prototype,{
-	_keyboard: null
-	,_mouse: null
+	tx: null
+	,_keyboard: null
+	,_shooting: null
 	,_back: null
 	,create: function() {
 		this._back = new flixel_ui_FlxButton(0,0,"Back",$bind(this,this.goMenu));
 		this._back.set_x(flixel_FlxG.width - this._back.get_width() * 1.15);
 		this._back.set_y(flixel_FlxG.height - this._back.get_height() * 1.5);
 		this.add(this._back);
+		this._keyboard = new flixel_text_FlxText(0,0,null,"Move: \n\tW - Move UP\n\tA - Move LEFT\n\tS - Move DOWN\n\tD - Move RIGHT\n",this.tx);
+		this._keyboard.set_x(flixel_FlxG.width / 10 - this._keyboard.get_width() / 10);
+		this._keyboard.set_y(flixel_FlxG.height / 3 - this._keyboard.get_height() / 3);
+		this.add(this._keyboard);
+		this._shooting = new flixel_text_FlxText(0,0,null,"Shooting: \n\tR - Reload\n\tMouse - Aim\n\tMouse Left Button - Shot\n",this.tx);
+		this._shooting.set_x(this._keyboard.x + this._keyboard.get_width() + this.tx);
+		this._shooting.set_y(flixel_FlxG.height / 3 - this._keyboard.get_height() / 3);
+		this.add(this._shooting);
 		flixel_FlxState.prototype.create.call(this);
 	}
 	,goMenu: function() {
@@ -8502,8 +8512,8 @@ PlayState.prototype = $extend(flixel_FlxState.prototype,{
 				s.animation.play("shot");
 				this.ammo -= 1;
 			}
-			this._shotVec.set_x(flixel_FlxG.mouse.x - this._p1.x);
-			this._shotVec.set_y(flixel_FlxG.mouse.y - this._p1.y);
+			this._shotVec.set_x(flixel_FlxG.mouse.x - s.x);
+			this._shotVec.set_y(flixel_FlxG.mouse.y - s.y);
 			flixel_math__$FlxVector_FlxVector_$Impl_$.normalize(this._shotVec);
 			this._shotVec.scale(300);
 			s.velocity.set_x(this._shotVec.x);
@@ -69650,7 +69660,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 472789;
+	this.version = 574426;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = ["lime","utils","AssetCache"];
