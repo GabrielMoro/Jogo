@@ -895,9 +895,9 @@ ApplicationMain.create = function(config) {
 	ManifestResources.init(config);
 	var _this = app.meta;
 	if(__map_reserved["build"] != null) {
-		_this.setReserved("build","87");
+		_this.setReserved("build","89");
 	} else {
-		_this.h["build"] = "87";
+		_this.h["build"] = "89";
 	}
 	var _this1 = app.meta;
 	if(__map_reserved["company"] != null) {
@@ -7741,10 +7741,11 @@ Enemy.prototype = $extend(Entity.prototype,{
 	}
 	,__class__: Enemy
 });
-var GameOverState = function(MaxSize) {
+var GameOverState = function(s) {
 	this._tx = flixel_FlxG.width / 25 | 0;
 	this._bg = new BgLevels();
-	flixel_FlxState.call(this,MaxSize);
+	this._score = s;
+	flixel_FlxState.call(this);
 };
 $hxClasses["GameOverState"] = GameOverState;
 GameOverState.__name__ = ["GameOverState"];
@@ -7753,6 +7754,8 @@ GameOverState.prototype = $extend(flixel_FlxState.prototype,{
 	_bg: null
 	,_gOverTxt: null
 	,_continue: null
+	,_scoreTxt: null
+	,_score: null
 	,_toMenu: null
 	,_tx: null
 	,create: function() {
@@ -7761,19 +7764,24 @@ GameOverState.prototype = $extend(flixel_FlxState.prototype,{
 		this._gOverTxt = new flixel_text_FlxText(0,0,null,"GAME OVER!",this._tx);
 		this._gOverTxt.set_x(flixel_FlxG.width / 2 - this._gOverTxt.get_width() / 2);
 		this._gOverTxt.set_y(flixel_FlxG.height / 2 - this._gOverTxt.get_height() / 2 - 75);
+		this.add(this._gOverTxt);
+		this._scoreTxt = new flixel_text_FlxText(0,0,0,"Score: ",this._tx * 7 / 10 | 0);
+		this._scoreTxt.set_text("Score: " + this._score);
+		this._scoreTxt.set_x(flixel_FlxG.width / 2 - this._scoreTxt.get_width() / 2);
+		this._scoreTxt.set_y(this._gOverTxt.y + this._gOverTxt.get_height() + 10);
+		this.add(this._scoreTxt);
 		this._continue = new flixel_ui_FlxButton(0,0,"Continue",$bind(this,this.playAgain));
 		this._continue.scale.set_x(1.1);
 		this._continue.scale.set_y(1.1);
 		this._continue.set_x(flixel_FlxG.width / 2 - this._continue.get_width() - 15);
-		this._continue.set_y(this._gOverTxt.y + this._gOverTxt.get_height() + 10);
+		this._continue.set_y(this._scoreTxt.y + this._scoreTxt.get_height() + 15);
+		this.add(this._continue);
 		this._toMenu = new flixel_ui_FlxButton(0,0,"Menu",$bind(this,this.goMenu));
 		this._toMenu.scale.set_x(1.1);
 		this._toMenu.scale.set_y(1.1);
 		this._toMenu.set_x(this._continue.x + this._continue.get_width() + 15);
-		this._toMenu.set_y(this._gOverTxt.y + this._gOverTxt.get_height() + 10);
-		this.add(this._gOverTxt);
+		this._toMenu.set_y(this._scoreTxt.y + this._scoreTxt.get_height() + 15);
 		this.add(this._toMenu);
-		this.add(this._continue);
 		flixel_FlxState.prototype.create.call(this);
 	}
 	,goMenu: function() {
@@ -7796,6 +7804,9 @@ var HUD = function() {
 	this._ammo = new flixel_text_FlxText(5,5,null,"0 ",this.tx);
 	this._ammo.set_x(this._ammo.get_width());
 	this.add(this._ammo);
+	this._score = new flixel_text_FlxText(5,5,null,"0",this.tx);
+	this._score.set_x(flixel_FlxG.width * 85 / 100 - this._score.get_width());
+	this.add(this._score);
 };
 $hxClasses["HUD"] = HUD;
 HUD.__name__ = ["HUD"];
@@ -7803,9 +7814,11 @@ HUD.__super__ = flixel_group_FlxTypedGroup;
 HUD.prototype = $extend(flixel_group_FlxTypedGroup.prototype,{
 	tx: null
 	,_ammo: null
+	,_score: null
 	,update: function(e) {
 		flixel_group_FlxTypedGroup.prototype.update.call(this,e);
 		var s = flixel_FlxG.game._state;
+		this._score.set_text("Score: " + s.score);
 		if(s.bulletType == 0) {
 			this._ammo.set_text("Ammo: INF");
 		}
@@ -8442,14 +8455,14 @@ Message.prototype = {
 	,__class__: Message
 };
 var PlayState = function(MaxSize) {
-	this._playBg = new BgLevels();
 	flixel_FlxState.call(this,MaxSize);
 };
 $hxClasses["PlayState"] = PlayState;
 PlayState.__name__ = ["PlayState"];
 PlayState.__super__ = flixel_FlxState;
 PlayState.prototype = $extend(flixel_FlxState.prototype,{
-	totalAmmo: null
+	score: null
+	,totalAmmo: null
 	,ammo: null
 	,bulletType: null
 	,_maxAmmo: null
@@ -8464,9 +8477,11 @@ PlayState.prototype = $extend(flixel_FlxState.prototype,{
 	,_pBulletsFire: null
 	,_bats: null
 	,create: function() {
+		this.score = 0;
 		this._eCont = 0;
 		this._sCont = 0;
 		this.bulletType = 0;
+		this._playBg = new BgLevels();
 		this._playBg.lvl_one();
 		this.add(this._playBg);
 		this._mail = new Mail();
@@ -8482,12 +8497,12 @@ PlayState.prototype = $extend(flixel_FlxState.prototype,{
 		this._p1.animation.add("idle",[6,7,8,8,7],12);
 		this._p1.animation.play("idle");
 		this.add(this._p1);
-		this.totalAmmo = 200;
+		this.totalAmmo = this._p1.getFireTotal();
 		this._maxAmmo = this._p1.getFireMax();
 		this.ammo = this._p1.getFireAmmo();
 		this._pBulletsNorm = new flixel_group_FlxTypedGroup();
 		var _g = 0;
-		while(_g < 500) {
+		while(_g < 30) {
 			var i = _g++;
 			var s = new Bullet(3.);
 			s.loadGraphic("assets/images/iceshard32.png",true,32);
@@ -8501,7 +8516,7 @@ PlayState.prototype = $extend(flixel_FlxState.prototype,{
 		}
 		this._pBulletsFire = new flixel_group_FlxTypedGroup();
 		var _g1 = 0;
-		while(_g1 < 500) {
+		while(_g1 < 100) {
 			var i1 = _g1++;
 			var s1 = new Bullet(6);
 			s1.loadGraphic("assets/images/fireball16.png",true,16);
@@ -8540,7 +8555,7 @@ PlayState.prototype = $extend(flixel_FlxState.prototype,{
 		flixel_FlxState.prototype.create.call(this);
 	}
 	,overlapPlayerBat: function(a,b) {
-		var nextState = new GameOverState();
+		var nextState = new GameOverState(this.score);
 		if(flixel_FlxG.game._state.switchTo(nextState)) {
 			flixel_FlxG.game._requestedState = nextState;
 		}
@@ -8553,6 +8568,7 @@ PlayState.prototype = $extend(flixel_FlxState.prototype,{
 		msg.data = a.damage;
 		msg.op = 0;
 		if(b.health - a.damage <= 0) {
+			this.score += 10;
 			var drop = flixel_FlxG.random["int"](0,9);
 			if(drop == 1) {
 				var _this = flixel_FlxG.log;
@@ -8610,7 +8626,7 @@ PlayState.prototype = $extend(flixel_FlxState.prototype,{
 			if(this.bulletType == 0 && this._sCont <= 0) {
 				s = this._pBulletsNorm.getFirstAvailable();
 				this.shooting(s);
-				this._sCont = 0.8;
+				this._sCont = 0.5;
 			} else if(this.bulletType == 1 && this.ammo > 0) {
 				s = this._pBulletsFire.getFirstAvailable();
 				this.ammo -= 1;
@@ -8678,20 +8694,25 @@ PlayState.prototype = $extend(flixel_FlxState.prototype,{
 	,__class__: PlayState
 });
 var Player = function() {
+	this._fireTotal = 5;
 	this._fireMax = 20;
-	this._fireAmmo = 20;
+	this._fireAmmo = 5;
 	Entity.call(this);
 };
 $hxClasses["Player"] = Player;
 Player.__name__ = ["Player"];
 Player.__super__ = Entity;
 Player.prototype = $extend(Entity.prototype,{
-	_fireAmmo: null
+	_fireTotal: null
+	,_fireAmmo: null
 	,_fireMax: null
 	,onMessage: function(msg) {
 		if(msg.op == 0) {
 			this.hurt(msg.data);
 		}
+	}
+	,getFireTotal: function() {
+		return this._fireTotal;
 	}
 	,getFireAmmo: function() {
 		return this._fireAmmo;
@@ -69767,7 +69788,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 591298;
+	this.version = 320697;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = ["lime","utils","AssetCache"];
